@@ -1,4 +1,5 @@
 # 由 custom_routing_rules 第 2 条（BT_直连）自动生成。
 # v2ray protocol `bittorrent` 在 Clash 无等价字段，使用 `GEOSITE,category-pt` 近似映射。
+# 暂时屏蔽，启用时会导致部分网站命中，如：dmhy.org
 #payload:
 #  - GEOSITE,category-pt
