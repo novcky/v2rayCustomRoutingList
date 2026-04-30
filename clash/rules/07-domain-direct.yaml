@@ -7,7 +7,6 @@ payload:
   - DOMAIN-SUFFIX,bitwarden.com
   - DOMAIN-SUFFIX,code.visualstudio.com
   - DOMAIN-SUFFIX,codebuddy.ai
-  - DOMAIN-SUFFIX,dash.cloudflare.com
   - DOMAIN-SUFFIX,faconhost.com
   - DOMAIN-SUFFIX,fdue.de
   - DOMAIN-SUFFIX,hifini.net
