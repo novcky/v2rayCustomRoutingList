@@ -18,6 +18,7 @@ payload:
   - DOMAIN-SUFFIX,novky.me
   - DOMAIN-SUFFIX,oracle.com
   - DOMAIN-SUFFIX,oraclecloud.com
+  - DOMAIN-SUFFIX,oracleimg.com
   - DOMAIN-SUFFIX,oracleinfinity.io
   - DOMAIN-SUFFIX,ping.pe
   - DOMAIN-SUFFIX,vo.msecnd.net
