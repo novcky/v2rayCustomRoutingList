@@ -16,7 +16,7 @@ log-level: info
 unified-delay: true
 tcp-concurrent: true
 find-process-mode: strict
-global-client-fingerprint: chrome
+client-fingerprint: chrome
 external-controller: 127.0.0.1:9090
 dns:
   enable: true
@@ -24,11 +24,11 @@ dns:
   respect-rules: true
   enhanced-mode: fake-ip
   nameserver:
-    - https://dns.cloudflare.com/dns-query
-    - https://dns.google/dns-query
+    - https://120.53.53.53/dns-query
+    - https://223.5.5.5/dns-query
   proxy-server-nameserver:
-    - 1.1.1.1
-    - 8.8.8.8
+    - https://120.53.53.53/dns-query
+    - https://223.5.5.5/dns-query
   direct-nameserver:
     - 223.5.5.5
     - 119.29.29.29
@@ -37,6 +37,15 @@ dns:
     geosite:cn,private:
       - 223.5.5.5
       - 119.29.29.29
+    geosite:geolocation-!cn:
+      - https://dns.cloudflare.com/dns-query
+      - https://dns.google/dns-query
+    +.cloudflare.com:
+      - https://dns.cloudflare.com/dns-query
+      - https://dns.google/dns-query
+    +.turnstile.com:
+      - https://dns.cloudflare.com/dns-query
+      - https://dns.google/dns-query
     "+.local":
       - 223.5.5.5
       - 119.29.29.29
@@ -79,6 +88,22 @@ dns:
   default-nameserver:
     - 223.5.5.5
     - 119.29.29.29
+  fallback:
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
+  fallback-filter:
+    geoip: true
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.1/32
+    domain:
+      - +.cloudflare.com
+      - +.turnstile.com
+      - +.google.com
+      - +.googleapis.com
+      - +.gvt1.com
+      - +.youtube.com
   fake-ip-filter:
     - "localhost"
     - "*.localhost"

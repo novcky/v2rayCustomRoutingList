@@ -350,13 +350,13 @@ def resolve_template_dns_servers(
     default_nameserver = ["223.5.5.5", "119.29.29.29"]
     # 用户补充的局域网 DNS 需要排在前面，才能真正接住 home.arpa / 公司内网域名这类“只在本地可解析”的请求。
     direct_nameserver = merge_unique_items(template_local_dns_servers, ["223.5.5.5", "119.29.29.29"])
-    # 代理节点域名需要尽量避开本地污染链路，因此默认固定到公共 IP DNS。
     proxy_server_nameserver = ["1.1.1.1", "8.8.8.8"]
     if template_dns_upstream == "pure-ip":
         nameserver = ["1.1.1.1", "8.8.8.8"]
     else:
-        # 仅在 compat 档保留域名型 DoH；这里依赖 TLS 域名身份，比直接写成 IP 形式的 DoH 更稳妥。
-        nameserver = ["https://dns.cloudflare.com/dns-query", "https://dns.google/dns-query"]
+        # compat 档使用国内可达的加密 DoH，境外域名由 nameserver-policy 分流到对应上游。
+        nameserver = ["https://120.53.53.53/dns-query", "https://223.5.5.5/dns-query"]
+        proxy_server_nameserver = list(nameserver)
     return nameserver, default_nameserver, direct_nameserver, proxy_server_nameserver
 
 
@@ -386,9 +386,14 @@ def append_template_dns(
         for item in template_disable_ipv6_domains
         if item not in local_dns_policy_domains and item != "geosite:cn,private"
     ]
-    # 少数风控敏感站点只需要“禁 AAAA”，不应因此把整套模板切回 IPv4-only；
-    # 这里继续沿用默认公网 nameserver，只在命中这些域名时附加 disable-ipv6=true。
-    ipv4_only_nameserver = [append_dns_server_bool_param(item, "disable-ipv6", True) for item in nameserver]
+    # 少数风控敏感站点只需要“禁 AAAA”；compat 档保持原有境外 DoH，pure-ip 沿用纯 IP 上游。
+    if template_dns_upstream == "pure-ip":
+        ipv4_only_nameserver = [append_dns_server_bool_param(item, "disable-ipv6", True) for item in nameserver]
+    else:
+        ipv4_only_nameserver = [
+            append_dns_server_bool_param(item, "disable-ipv6", True)
+            for item in ("https://dns.cloudflare.com/dns-query", "https://dns.google/dns-query")
+        ]
 
     lines.append("dns:")
     lines.append("  enable: true")
@@ -409,6 +414,16 @@ def append_template_dns(
     lines.append("    geosite:cn,private:")
     for item in direct_nameserver:
         lines.append(f"      - {item}")
+    if template_dns_upstream != "pure-ip":
+        lines.append("    geosite:geolocation-!cn:")
+        lines.append("      - https://dns.cloudflare.com/dns-query")
+        lines.append("      - https://dns.google/dns-query")
+        lines.append("    +.cloudflare.com:")
+        lines.append("      - https://dns.cloudflare.com/dns-query")
+        lines.append("      - https://dns.google/dns-query")
+        lines.append("    +.turnstile.com:")
+        lines.append("      - https://dns.cloudflare.com/dns-query")
+        lines.append("      - https://dns.google/dns-query")
     # 常见内网/开发域名应优先落到 direct-nameserver：
     # 1) 让 redir-host 在本地联调时先走“本地 DNS + 直连”路径，而不是默认公网解析；
     # 2) 当用户补充 template.local-dns-servers.txt 时，同一份模板即可无缝吸收这些本地域名。
@@ -420,6 +435,23 @@ def append_template_dns(
     lines.append("  default-nameserver:")
     for item in default_nameserver:
         lines.append(f"    - {item}")
+    if template_dns_upstream != "pure-ip":
+        lines.append("  fallback:")
+        lines.append("    - https://dns.google/dns-query")
+        lines.append("    - https://cloudflare-dns.com/dns-query")
+        lines.append("  fallback-filter:")
+        lines.append("    geoip: true")
+        lines.append("    ipcidr:")
+        lines.append("      - 240.0.0.0/4")
+        lines.append("      - 0.0.0.0/32")
+        lines.append("      - 127.0.0.1/32")
+        lines.append("    domain:")
+        lines.append("      - +.cloudflare.com")
+        lines.append("      - +.turnstile.com")
+        lines.append("      - +.google.com")
+        lines.append("      - +.googleapis.com")
+        lines.append("      - +.gvt1.com")
+        lines.append("      - +.youtube.com")
 
     if template_dns_mode == "fake-ip":
         # 仅在 fake-ip 模式输出过滤基线，避免 redir-host 模式携带无效配置造成理解偏差。
@@ -528,7 +560,7 @@ def write_subscription_template(
     lines.append("unified-delay: true")
     lines.append("tcp-concurrent: true")
     lines.append("find-process-mode: strict")
-    lines.append("global-client-fingerprint: chrome")
+    lines.append("client-fingerprint: chrome")
     append_template_runtime(lines, template_profile, template_dns_mode)
     lines.append("external-controller: 127.0.0.1:9090")
     append_template_dns(
