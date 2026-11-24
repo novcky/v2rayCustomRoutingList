@@ -5,8 +5,12 @@ payload:
   - DOMAIN,default.exp-tas.com
   - DOMAIN,docs.live.net
   - DOMAIN-SUFFIX,bitwarden.com
+  - DOMAIN-SUFFIX,cline.bot
   - DOMAIN-SUFFIX,code.visualstudio.com
   - DOMAIN-SUFFIX,codebuddy.ai
+  - DOMAIN-SUFFIX,commandcode.ai
+  - DOMAIN-SUFFIX,dmit.io
+  - DOMAIN-SUFFIX,edgeone.dev
   - DOMAIN-SUFFIX,faconhost.com
   - DOMAIN-SUFFIX,fdue.de
   - DOMAIN-SUFFIX,hifini.net
@@ -21,6 +25,9 @@ payload:
   - DOMAIN-SUFFIX,oracleimg.com
   - DOMAIN-SUFFIX,oracleinfinity.io
   - DOMAIN-SUFFIX,ping.pe
+  - DOMAIN-SUFFIX,ruankao.dpdns.org
+  - DOMAIN-SUFFIX,sharedchat.cc
+  - DOMAIN-SUFFIX,tunehub.sayqz.com
   - DOMAIN-SUFFIX,vo.msecnd.net
   - DOMAIN-SUFFIX,vscode-cdn.net
   - DOMAIN,login.live.com
@@ -28,7 +35,6 @@ payload:
   - DOMAIN,marketplace.visualstudio.com
   - DOMAIN,ms-vscode-remote.gallerycdn.vsassets.io
   - DOMAIN,otheve.beacon.qq.com
-  - DOMAIN,substrate.office.com
   - DOMAIN,vscode-sync.trafficmanager.net
   - DOMAIN,vscodeexperiments.azureedge.net
   - DOMAIN,wcpstatic.microsoft.com

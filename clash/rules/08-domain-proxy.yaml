@@ -7,6 +7,7 @@ payload:
   - DOMAIN-SUFFIX,404888.xyz
   - DOMAIN-SUFFIX,9damaogame.net
   - DOMAIN-SUFFIX,alacritty.org
+  - DOMAIN-SUFFIX,amd.com
   - DOMAIN-SUFFIX,ampcode.com
   - DOMAIN-SUFFIX,anyrouter.top
   - DOMAIN-SUFFIX,aspose.com
@@ -27,6 +28,7 @@ payload:
   - DOMAIN-SUFFIX,dll-files.com
   - DOMAIN-SUFFIX,dmhy.org
   - DOMAIN-SUFFIX,domcomp.com
+  - DOMAIN-SUFFIX,download.prss.microsoft.com
   - DOMAIN-SUFFIX,drivereasy.com
   - DOMAIN-SUFFIX,editorconfig.org
   - DOMAIN-SUFFIX,emtrek.org
@@ -71,6 +73,7 @@ payload:
   - DOMAIN-SUFFIX,scloud.ws
   - DOMAIN-SUFFIX,shaoit.com
   - DOMAIN-SUFFIX,spartanhost.net
+  - DOMAIN-SUFFIX,substrate.office.com
   - DOMAIN-SUFFIX,subtitlecat.com
   - DOMAIN-SUFFIX,tabnine.com
   - DOMAIN-SUFFIX,taptap.io
@@ -79,9 +82,11 @@ payload:
   - DOMAIN-SUFFIX,tortoisesvn.net
   - DOMAIN-SUFFIX,turbo.build
   - DOMAIN-SUFFIX,up4ever.download
+  - DOMAIN-SUFFIX,visualstudio.com
   - DOMAIN-SUFFIX,vnote.fun
   - DOMAIN-SUFFIX,windowsupdate.com
   - DOMAIN-SUFFIX,windsurf.com
+  - DOMAIN-SUFFIX,workbuddy.ai
   - DOMAIN-SUFFIX,xiaoxintv.net
   - DOMAIN-SUFFIX,xicons.org
   - DOMAIN-SUFFIX,xrea.com
