@@ -101,6 +101,7 @@ dns:
     - https://cloudflare-dns.com/dns-query
   fallback-filter:
     geoip: true
+    geoip-code: CN
     ipcidr:
       - 240.0.0.0/4
       - 0.0.0.0/32
@@ -112,6 +113,11 @@ dns:
       - +.googleapis.com
       - +.gvt1.com
       - +.youtube.com
+      - +.facebook.com
+      - +.twitter.com
+      - +.xn--ngstr-lra8j.com
+      - +.google.cn
+      - +.googleapis.cn
 proxies: null
 proxy-groups:
   - name: 🚀 手动选择

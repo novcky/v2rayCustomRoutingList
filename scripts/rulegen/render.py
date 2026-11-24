@@ -441,6 +441,7 @@ def append_template_dns(
         lines.append("    - https://cloudflare-dns.com/dns-query")
         lines.append("  fallback-filter:")
         lines.append("    geoip: true")
+        lines.append("    geoip-code: CN")
         lines.append("    ipcidr:")
         lines.append("      - 240.0.0.0/4")
         lines.append("      - 0.0.0.0/32")
@@ -452,6 +453,11 @@ def append_template_dns(
         lines.append("      - +.googleapis.com")
         lines.append("      - +.gvt1.com")
         lines.append("      - +.youtube.com")
+        lines.append("      - +.facebook.com")
+        lines.append("      - +.twitter.com")
+        lines.append("      - +.xn--ngstr-lra8j.com")
+        lines.append("      - +.google.cn")
+        lines.append("      - +.googleapis.cn")
 
     if template_dns_mode == "fake-ip":
         # 仅在 fake-ip 模式输出过滤基线，避免 redir-host 模式携带无效配置造成理解偏差。
@@ -563,6 +569,10 @@ def write_subscription_template(
     lines.append("client-fingerprint: chrome")
     append_template_runtime(lines, template_profile, template_dns_mode)
     lines.append("external-controller: 127.0.0.1:9090")
+    if template_dns_mode == "fake-ip":
+        # fake-ip 映射不做持久化，避免重启后恢复旧映射。
+        lines.append("profile:")
+        lines.append("  store-fake-ip: false")
     append_template_dns(
         lines,
         template_profile,

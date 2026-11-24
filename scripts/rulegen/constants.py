@@ -62,7 +62,7 @@ LOCAL_DNS_POLICY_BASELINE = [
     "+.svc.cluster.local",
 ]
 
-# fake-ip 过滤基线：覆盖开发机常见的本地域名、容器互联域名与基础系统探测域名。
+# fake-ip 过滤基线：覆盖开发机常见的本地域名、容器互联域名、基础系统探测域名与常见音乐服务域名。
 # 这份基线不追求“一次性全覆盖”，而是降低默认故障率，并给后续增量维护提供稳定起点。
 FAKE_IP_FILTER_BASELINE = [
     "localhost",
@@ -133,4 +133,18 @@ FAKE_IP_FILTER_BASELINE = [
     "*.ipv6.microsoft.com",
     "*.msftconnecttest.com",
     "*.msftncsi.com",
+    "music.163.com",
+    "*.music.163.com",
+    "*.126.net",
+    "musicapi.taihe.com",
+    "music.taihe.com",
+    "songsearch.kugou.com",
+    "trackercdn.kugou.com",
+    "*.kuwo.cn",
+    "api-jooxtt.sanook.com",
+    "api.joox.com",
+    "joox.com",
+    "y.qq.com",
+    "*.y.qq.com",
+    "localhost.ptlogin2.qq.com",
 ]

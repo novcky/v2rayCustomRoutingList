@@ -18,6 +18,8 @@ tcp-concurrent: true
 find-process-mode: strict
 client-fingerprint: chrome
 external-controller: 127.0.0.1:9090
+profile:
+  store-fake-ip: false
 dns:
   enable: true
   ipv6: true
@@ -93,6 +95,7 @@ dns:
     - https://cloudflare-dns.com/dns-query
   fallback-filter:
     geoip: true
+    geoip-code: CN
     ipcidr:
       - 240.0.0.0/4
       - 0.0.0.0/32
@@ -104,6 +107,11 @@ dns:
       - +.googleapis.com
       - +.gvt1.com
       - +.youtube.com
+      - +.facebook.com
+      - +.twitter.com
+      - +.xn--ngstr-lra8j.com
+      - +.google.cn
+      - +.googleapis.cn
   fake-ip-filter:
     - "localhost"
     - "*.localhost"
@@ -173,6 +181,20 @@ dns:
     - "*.ipv6.microsoft.com"
     - "*.msftconnecttest.com"
     - "*.msftncsi.com"
+    - "music.163.com"
+    - "*.music.163.com"
+    - "*.126.net"
+    - "musicapi.taihe.com"
+    - "music.taihe.com"
+    - "songsearch.kugou.com"
+    - "trackercdn.kugou.com"
+    - "*.kuwo.cn"
+    - "api-jooxtt.sanook.com"
+    - "api.joox.com"
+    - "joox.com"
+    - "y.qq.com"
+    - "*.y.qq.com"
+    - "localhost.ptlogin2.qq.com"
 proxies: null
 proxy-groups:
   - name: 🚀 手动选择
