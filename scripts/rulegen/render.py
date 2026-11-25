@@ -15,6 +15,12 @@ from .constants import (
 from .convert import collect_custom_policy_groups, resolve_policy_group
 from .models import ConvertedRule
 
+# 人工确认过的屏蔽项：源文件保持 enabled=true 以保留规则语义，
+# 但对应产物需要暂时屏蔽。这里把“产物屏蔽”作为可复现的生成规则维护。
+DISABLED_RULE_FILES = {
+    "02-bt-direct.yaml": "暂时屏蔽，启用时会导致部分网站命中，如：dmhy.org",
+}
+
 
 def write_rule_file(path: Path, rule: ConvertedRule) -> None:
     """写入单条 rule-provider 文件。"""
@@ -24,13 +30,24 @@ def write_rule_file(path: Path, rule: ConvertedRule) -> None:
     if rule.notes:
         for note in rule.notes:
             lines.append(f"# {note}")
-    lines.append("payload:")
-    if rule.payload:
-        for item in rule.payload:
-            lines.append(f"  - {item}")
+    disable_reason = DISABLED_RULE_FILES.get(path.name)
+    if disable_reason:
+        # 保留来源注释，但把 payload 整段注释掉，避免重新生成时被误启用。
+        lines.append(f"# {disable_reason}")
+        lines.append("#payload:")
+        if rule.payload:
+            for item in rule.payload:
+                lines.append(f"#  - {item}")
+        else:
+            lines.append("#  # 空规则：原始条目无可迁移匹配项。")
     else:
-        lines.append("  # 空规则：原始条目无可迁移匹配项。")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        lines.append("payload:")
+        if rule.payload:
+            for item in rule.payload:
+                lines.append(f"  - {item}")
+        else:
+            lines.append("  # 空规则：原始条目无可迁移匹配项。")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_main_file(
@@ -143,7 +160,7 @@ def write_main_file(
     if not has_terminal_match:
         # 防御式兜底：源规则若未包含全端口/全流量兜底，自动补一个 MATCH。
         lines.append(f"  - MATCH,{fallback_group}")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_proxy_group_example(path: Path, github_id: str) -> None:
@@ -188,7 +205,7 @@ def write_proxy_group_example(path: Path, github_id: str) -> None:
         "      - 🚀 手动选择",
         "      - ♻️ 自动选择",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_geox_url_snippet(path: Path) -> None:
@@ -203,7 +220,7 @@ def write_geox_url_snippet(path: Path) -> None:
         "  geoip: https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/geoip.dat",
         "  geosite: https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/geosite.dat",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_readme(path: Path) -> None:
@@ -298,7 +315,7 @@ def write_readme(path: Path) -> None:
         "- `enabled=false` 条目不会生成 provider 文件与 provider 声明，仅保留注释方便回滚。",
         "- remarks 写“拦截”但 outboundTag 为 `direct` 的条目，会按真实行为映射为 `direct`。",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def merge_unique_items(*groups: list[str]) -> list[str]:
@@ -676,7 +693,7 @@ def write_subscription_template(
         lines.append(f"    path: ./providers/custom/{rule.file_name}")
         lines.append(f"    interval: {interval}")
 
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def cleanup_generated_rule_files(rules_dir: Path) -> None:

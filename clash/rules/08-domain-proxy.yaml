@@ -90,6 +90,7 @@ payload:
   - DOMAIN-SUFFIX,xiaoxintv.net
   - DOMAIN-SUFFIX,xicons.org
   - DOMAIN-SUFFIX,xrea.com
+  - DOMAIN-SUFFIX,z.ai
   - DOMAIN-SUFFIX,zeabur.com
   - DOMAIN,ipv6.msftconnecttest.com
   - DOMAIN,material-web.dev
