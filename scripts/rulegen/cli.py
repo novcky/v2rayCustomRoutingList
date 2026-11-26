@@ -55,12 +55,6 @@ def parse_args() -> argparse.Namespace:
         help="订阅站模板 DNS 模式：redir-host(默认)/fake-ip(兼容旧行为)；仅在 --template-file 导出单文件时生效",
     )
     parser.add_argument(
-        "--template-dns-upstream",
-        choices=("compat", "pure-ip"),
-        default="compat",
-        help="订阅站模板 DNS 上游形态：compat(默认，nameserver 使用加密域名)/pure-ip(尽量使用纯 IP 上游)",
-    )
-    parser.add_argument(
         "--no-template",
         action="store_true",
         help="不生成订阅站模板文件",

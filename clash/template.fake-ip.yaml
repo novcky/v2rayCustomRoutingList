@@ -5,7 +5,7 @@
 # 3) 末尾 MATCH 固定使用“漏网策略”组；该组默认首选代理，仍可在客户端切换直连/代理。
 # 4) 当前模板档位：compat。
 # 5) 当前 DNS 模式：fake-ip。
-# 6) 当前 DNS 上游：compat。
+# 6) DNS 上游固定为 Cloudflare / Google DoH；国内 DNS 仅用于 cn/private 直连。
 # 7) 如需补充内网 / 开发域名解析，可在同目录维护 template.local-dns-servers.txt / template.local-dns-domains.txt。
 # 8) 如需保留全局 IPv6、但让少数站点强制仅返回 A 记录，可在同目录维护 template.disable-ipv6-domains.txt。
 
@@ -26,11 +26,11 @@ dns:
   respect-rules: true
   enhanced-mode: fake-ip
   nameserver:
-    - https://120.53.53.53/dns-query
-    - https://223.5.5.5/dns-query
+    - https://dns.cloudflare.com/dns-query
+    - https://dns.google/dns-query
   proxy-server-nameserver:
-    - https://120.53.53.53/dns-query
-    - https://223.5.5.5/dns-query
+    - https://dns.cloudflare.com/dns-query
+    - https://dns.google/dns-query
   direct-nameserver:
     - 223.5.5.5
     - 119.29.29.29

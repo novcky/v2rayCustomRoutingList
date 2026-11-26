@@ -96,6 +96,17 @@ class PipelineTests(unittest.TestCase):
             self.assertIn("    \"+.home.arpa\":\n      - 223.5.5.5\n      - 119.29.29.29", redir_host_text)
             self.assertIn("    \"kubernetes.default.svc\":\n      - 223.5.5.5\n      - 119.29.29.29", redir_host_text)
             self.assertIn("https://dns.cloudflare.com/dns-query", redir_host_text)
+            self.assertIn(
+                "  nameserver:\n    - https://dns.cloudflare.com/dns-query\n    - https://dns.google/dns-query",
+                redir_host_text,
+            )
+            self.assertIn(
+                "  proxy-server-nameserver:\n    - https://dns.cloudflare.com/dns-query\n    - https://dns.google/dns-query",
+                redir_host_text,
+            )
+            self.assertNotIn("223.5.5.5/dns-query", redir_host_text)
+            self.assertNotIn("120.53.53.53", redir_host_text)
+            self.assertNotIn("223.5.5.5/dns-query", fake_ip_text)
             self.assertIn("  fallback:", redir_host_text)
             self.assertIn("    geoip-code: CN", redir_host_text)
             self.assertIn("      - +.facebook.com", redir_host_text)
@@ -137,35 +148,11 @@ class PipelineTests(unittest.TestCase):
             template_text = (out / "template.custom.yaml").read_text(encoding="utf-8")
             self.assertIn("enhanced-mode: fake-ip", template_text)
             self.assertIn("fake-ip-filter:", template_text)
-            self.assertIn("# 6) 当前 DNS 上游：compat。", template_text)
-            self.assertNotIn("force-dns-mapping: true", template_text)
-
-    def test_generate_custom_pure_ip_template_with_flag(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-            source = tmp_path / "custom_routing_rules.json"
-            out = tmp_path / "out"
-            self.write_source_rules(source)
-
-            result = self.run_generator(
-                source,
-                out,
-                "--template-file",
-                "template.pure-ip.yaml",
-                "--template-dns-upstream",
-                "pure-ip",
+            self.assertIn(
+                "# 6) DNS 上游固定为 Cloudflare / Google DoH；国内 DNS 仅用于 cn/private 直连。",
+                template_text,
             )
-
-            self.assertEqual(result.returncode, 0, msg=result.stderr)
-            self.assertTrue((out / "template.pure-ip.yaml").exists())
-
-            template_text = (out / "template.pure-ip.yaml").read_text(encoding="utf-8")
-            self.assertIn("enhanced-mode: redir-host", template_text)
-            self.assertIn("# 6) 当前 DNS 上游：pure-ip。", template_text)
-            self.assertIn("  nameserver:\n    - 1.1.1.1\n    - 8.8.8.8", template_text)
-            self.assertIn("  proxy-server-nameserver:\n    - 1.1.1.1\n    - 8.8.8.8", template_text)
-            self.assertIn("  direct-nameserver:\n    - 223.5.5.5\n    - 119.29.29.29", template_text)
-            self.assertNotIn("dns.google/dns-query", template_text)
+            self.assertNotIn("force-dns-mapping: true", template_text)
 
 
 

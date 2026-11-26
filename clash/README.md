@@ -30,12 +30,6 @@ python3 scripts/generate_clash_rules.py --template-profile boost
 python3 scripts/generate_clash_rules.py --template-file template.custom.yaml --template-dns-mode fake-ip
 ```
 
-如需尽量避免域名型 DNS 上游，可生成纯 IP 版本：
-
-```bash
-python3 scripts/generate_clash_rules.py --template-file template.pure-ip.yaml --template-dns-upstream pure-ip
-```
-
 启用严格模式（出现 warning 时退出，适合 CI）：
 
 ```bash
@@ -80,7 +74,7 @@ python3 scripts/generate_clash_rules.py --no-template
 - 如需保留全局 IPv6、但让少数站点禁用 AAAA，可在 `clash/template.disable-ipv6-domains.txt` 中补充域名模式；生成器会把这些域名定向到附带 `disable-ipv6=true` 的公网 DNS。
 - DNS 默认按“显式直连少数规则 + MATCH 默认代理”建模：`nameserver` 走可信公网解析，`geosite:cn/private` 走 `direct-nameserver`。
 - `ping` / `ICMP` 不属于 `sniffer` 覆盖范围；验证 `redir-host` 是否生效时，应优先使用浏览器、`curl` 或脚本里的 HTTP/TLS/QUIC 请求。
-- 如需尽量避免域名型 DNS 上游，可配合 `--template-dns-upstream pure-ip` 生成纯 IP 模板。
+- DNS 上游固定为 Cloudflare / Google DoH；国内 DNS 仅用于 `geosite:cn/private` 与本地域名直连，不随参数变化。
 - 纯 `0-65535` / `1-65535` 全端口兜底规则会自动转换为 `MATCH`。
 - 订阅站模板中，末尾 `MATCH` 固定指向“漏网策略”组，且该组默认首选代理，便于按需切换直连/代理。
 - `enabled=false` 条目不会生成 provider 文件与 provider 声明，仅保留注释方便回滚。

@@ -259,12 +259,6 @@ def write_readme(path: Path) -> None:
         "python3 scripts/generate_clash_rules.py --template-file template.custom.yaml --template-dns-mode fake-ip",
         "```",
         "",
-        "如需尽量避免域名型 DNS 上游，可生成纯 IP 版本：",
-        "",
-        "```bash",
-        "python3 scripts/generate_clash_rules.py --template-file template.pure-ip.yaml --template-dns-upstream pure-ip",
-        "```",
-        "",
         "启用严格模式（出现 warning 时退出，适合 CI）：",
         "",
         "```bash",
@@ -309,7 +303,7 @@ def write_readme(path: Path) -> None:
         "- 如需保留全局 IPv6、但让少数站点禁用 AAAA，可在 `clash/template.disable-ipv6-domains.txt` 中补充域名模式；生成器会把这些域名定向到附带 `disable-ipv6=true` 的公网 DNS。",
         "- DNS 默认按“显式直连少数规则 + MATCH 默认代理”建模：`nameserver` 走可信公网解析，`geosite:cn/private` 走 `direct-nameserver`。",
         "- `ping` / `ICMP` 不属于 `sniffer` 覆盖范围；验证 `redir-host` 是否生效时，应优先使用浏览器、`curl` 或脚本里的 HTTP/TLS/QUIC 请求。",
-        "- 如需尽量避免域名型 DNS 上游，可配合 `--template-dns-upstream pure-ip` 生成纯 IP 模板。",
+        "- DNS 上游固定为 Cloudflare / Google DoH；国内 DNS 仅用于 `geosite:cn/private` 与本地域名直连，不随参数变化。",
         "- 纯 `0-65535` / `1-65535` 全端口兜底规则会自动转换为 `MATCH`。",
         "- 订阅站模板中，末尾 `MATCH` 固定指向“漏网策略”组，且该组默认首选代理，便于按需切换直连/代理。",
         "- `enabled=false` 条目不会生成 provider 文件与 provider 声明，仅保留注释方便回滚。",
@@ -357,23 +351,21 @@ def append_match_all_explanation(lines: list[str], fallback_group: str) -> None:
     lines.append(f"  # 全端口/全流量兜底规则已折叠为 MATCH,{fallback_group}；该组默认首选代理，可在客户端切回直连。")
 
 def resolve_template_dns_servers(
-    template_dns_upstream: str,
     template_local_dns_servers: list[str],
 ) -> tuple[list[str], list[str], list[str], list[str]]:
-    """返回模板使用的 DNS 上游集合。"""
+    """返回模板使用的 DNS 上游集合。
+
+    通用 DNS 固定走境外加密上游，避免未命中 nameserver-policy 的域名被大陆解析器接管；
+    国内 IP 上游只保留给直连场景与引导解析，不通过参数切换。
+    """
 
     # 直连规则主要承接 `cn/private` 这类明确本地流量，因此继续使用本地可达的 IP 上游，
     # 避免把 LAN/内网访问强行送去默认代理侧的公网解析。
     default_nameserver = ["223.5.5.5", "119.29.29.29"]
     # 用户补充的局域网 DNS 需要排在前面，才能真正接住 home.arpa / 公司内网域名这类“只在本地可解析”的请求。
     direct_nameserver = merge_unique_items(template_local_dns_servers, ["223.5.5.5", "119.29.29.29"])
-    proxy_server_nameserver = ["1.1.1.1", "8.8.8.8"]
-    if template_dns_upstream == "pure-ip":
-        nameserver = ["1.1.1.1", "8.8.8.8"]
-    else:
-        # compat 档使用国内可达的加密 DoH，境外域名由 nameserver-policy 分流到对应上游。
-        nameserver = ["https://120.53.53.53/dns-query", "https://223.5.5.5/dns-query"]
-        proxy_server_nameserver = list(nameserver)
+    nameserver = ["https://dns.cloudflare.com/dns-query", "https://dns.google/dns-query"]
+    proxy_server_nameserver = list(nameserver)
     return nameserver, default_nameserver, direct_nameserver, proxy_server_nameserver
 
 
@@ -381,7 +373,6 @@ def append_template_dns(
     lines: list[str],
     template_profile: str,
     template_dns_mode: str,
-    template_dns_upstream: str,
     template_local_dns_servers: list[str],
     template_local_dns_domains: list[str],
     template_disable_ipv6_domains: list[str],
@@ -394,7 +385,6 @@ def append_template_dns(
 
     _ = template_profile
     nameserver, default_nameserver, direct_nameserver, proxy_server_nameserver = resolve_template_dns_servers(
-        template_dns_upstream,
         template_local_dns_servers,
     )
     local_dns_policy_domains = merge_unique_items(LOCAL_DNS_POLICY_BASELINE, template_local_dns_domains)
@@ -403,14 +393,8 @@ def append_template_dns(
         for item in template_disable_ipv6_domains
         if item not in local_dns_policy_domains and item != "geosite:cn,private"
     ]
-    # 少数风控敏感站点只需要“禁 AAAA”；compat 档保持原有境外 DoH，pure-ip 沿用纯 IP 上游。
-    if template_dns_upstream == "pure-ip":
-        ipv4_only_nameserver = [append_dns_server_bool_param(item, "disable-ipv6", True) for item in nameserver]
-    else:
-        ipv4_only_nameserver = [
-            append_dns_server_bool_param(item, "disable-ipv6", True)
-            for item in ("https://dns.cloudflare.com/dns-query", "https://dns.google/dns-query")
-        ]
+    # 少数风控敏感站点只需要“禁 AAAA”；沿用固定的境外 DoH 上游，仅附加 disable-ipv6 参数。
+    ipv4_only_nameserver = [append_dns_server_bool_param(item, "disable-ipv6", True) for item in nameserver]
 
     lines.append("dns:")
     lines.append("  enable: true")
@@ -431,16 +415,15 @@ def append_template_dns(
     lines.append("    geosite:cn,private:")
     for item in direct_nameserver:
         lines.append(f"      - {item}")
-    if template_dns_upstream != "pure-ip":
-        lines.append("    geosite:geolocation-!cn:")
-        lines.append("      - https://dns.cloudflare.com/dns-query")
-        lines.append("      - https://dns.google/dns-query")
-        lines.append("    +.cloudflare.com:")
-        lines.append("      - https://dns.cloudflare.com/dns-query")
-        lines.append("      - https://dns.google/dns-query")
-        lines.append("    +.turnstile.com:")
-        lines.append("      - https://dns.cloudflare.com/dns-query")
-        lines.append("      - https://dns.google/dns-query")
+    lines.append("    geosite:geolocation-!cn:")
+    lines.append("      - https://dns.cloudflare.com/dns-query")
+    lines.append("      - https://dns.google/dns-query")
+    lines.append("    +.cloudflare.com:")
+    lines.append("      - https://dns.cloudflare.com/dns-query")
+    lines.append("      - https://dns.google/dns-query")
+    lines.append("    +.turnstile.com:")
+    lines.append("      - https://dns.cloudflare.com/dns-query")
+    lines.append("      - https://dns.google/dns-query")
     # 常见内网/开发域名应优先落到 direct-nameserver：
     # 1) 让 redir-host 在本地联调时先走“本地 DNS + 直连”路径，而不是默认公网解析；
     # 2) 当用户补充 template.local-dns-servers.txt 时，同一份模板即可无缝吸收这些本地域名。
@@ -452,29 +435,28 @@ def append_template_dns(
     lines.append("  default-nameserver:")
     for item in default_nameserver:
         lines.append(f"    - {item}")
-    if template_dns_upstream != "pure-ip":
-        lines.append("  fallback:")
-        lines.append("    - https://dns.google/dns-query")
-        lines.append("    - https://cloudflare-dns.com/dns-query")
-        lines.append("  fallback-filter:")
-        lines.append("    geoip: true")
-        lines.append("    geoip-code: CN")
-        lines.append("    ipcidr:")
-        lines.append("      - 240.0.0.0/4")
-        lines.append("      - 0.0.0.0/32")
-        lines.append("      - 127.0.0.1/32")
-        lines.append("    domain:")
-        lines.append("      - +.cloudflare.com")
-        lines.append("      - +.turnstile.com")
-        lines.append("      - +.google.com")
-        lines.append("      - +.googleapis.com")
-        lines.append("      - +.gvt1.com")
-        lines.append("      - +.youtube.com")
-        lines.append("      - +.facebook.com")
-        lines.append("      - +.twitter.com")
-        lines.append("      - +.xn--ngstr-lra8j.com")
-        lines.append("      - +.google.cn")
-        lines.append("      - +.googleapis.cn")
+    lines.append("  fallback:")
+    lines.append("    - https://dns.google/dns-query")
+    lines.append("    - https://cloudflare-dns.com/dns-query")
+    lines.append("  fallback-filter:")
+    lines.append("    geoip: true")
+    lines.append("    geoip-code: CN")
+    lines.append("    ipcidr:")
+    lines.append("      - 240.0.0.0/4")
+    lines.append("      - 0.0.0.0/32")
+    lines.append("      - 127.0.0.1/32")
+    lines.append("    domain:")
+    lines.append("      - +.cloudflare.com")
+    lines.append("      - +.turnstile.com")
+    lines.append("      - +.google.com")
+    lines.append("      - +.googleapis.com")
+    lines.append("      - +.gvt1.com")
+    lines.append("      - +.youtube.com")
+    lines.append("      - +.facebook.com")
+    lines.append("      - +.twitter.com")
+    lines.append("      - +.xn--ngstr-lra8j.com")
+    lines.append("      - +.google.cn")
+    lines.append("      - +.googleapis.cn")
 
     if template_dns_mode == "fake-ip":
         # 仅在 fake-ip 模式输出过滤基线，避免 redir-host 模式携带无效配置造成理解偏差。
@@ -539,7 +521,6 @@ def write_subscription_template(
     github_id: str,
     template_profile: str,
     template_dns_mode: str,
-    template_dns_upstream: str,
     template_local_dns_servers: list[str],
     template_local_dns_domains: list[str],
     template_disable_ipv6_domains: list[str],
@@ -568,7 +549,7 @@ def write_subscription_template(
     lines.append("# 3) 末尾 MATCH 固定使用“漏网策略”组；该组默认首选代理，仍可在客户端切换直连/代理。")
     lines.append(f"# 4) 当前模板档位：{template_profile}。")
     lines.append(f"# 5) 当前 DNS 模式：{template_dns_mode}。")
-    lines.append(f"# 6) 当前 DNS 上游：{template_dns_upstream}。")
+    lines.append("# 6) DNS 上游固定为 Cloudflare / Google DoH；国内 DNS 仅用于 cn/private 直连。")
     lines.append(
         f"# 7) 如需补充内网 / 开发域名解析，可在同目录维护 {TEMPLATE_LOCAL_DNS_SERVERS_FILE} / {TEMPLATE_LOCAL_DNS_DOMAINS_FILE}。"
     )
@@ -594,7 +575,6 @@ def write_subscription_template(
         lines,
         template_profile,
         template_dns_mode,
-        template_dns_upstream,
         template_local_dns_servers,
         template_local_dns_domains,
         template_disable_ipv6_domains,

@@ -161,7 +161,6 @@ def main() -> int:
                 github_id=args.github_id,
                 template_profile=args.template_profile,
                 template_dns_mode=template_dns_mode,
-                template_dns_upstream=args.template_dns_upstream,
                 template_local_dns_servers=template_local_dns_servers,
                 template_local_dns_domains=template_local_dns_domains,
                 template_disable_ipv6_domains=template_disable_ipv6_domains,
